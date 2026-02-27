@@ -170,18 +170,6 @@ public:
 
     virtual ~PubkeyProvider() = default;
 
-    /** Compare two public keys represented by this provider.
-     * Used by the Miniscript descriptors to check for duplicate keys in the script.
-     */
-    bool operator<(PubkeyProvider& other) const {
-        FlatSigningProvider dummy;
-
-        std::optional<CPubKey> a = GetPubKey(0, dummy, dummy);
-        std::optional<CPubKey> b = other.GetPubKey(0, dummy, dummy);
-
-        return a < b;
-    }
-
     /** Derive a public key and put it into out.
      *  read_cache is the cache to read keys from (if not nullptr)
      *  write_cache is the cache to write keys to (if not nullptr)
@@ -2195,7 +2183,16 @@ struct KeyParser {
         : m_out(out), m_in(in), m_script_ctx(ctx), m_expr_index(key_exp_index) {}
 
     bool KeyCompare(const Key& a, const Key& b) const {
-        return *m_keys.at(a).at(0) < *m_keys.at(b).at(0);
+        // Use the signing provider populated during parsing so that
+        // hardened-path participants can resolve their pubkeys. An
+        // empty provider causes GetPubKey to return nullopt for those
+        // keys, leading to false-positive duplicate detection.
+        FlatSigningProvider dummy;
+        const SigningProvider& sign_provider = m_out ? *m_out : dummy;
+        FlatSigningProvider out_a, out_b;
+        std::optional<CPubKey> pub_a = m_keys.at(a).at(0)->GetPubKey(0, sign_provider, out_a);
+        std::optional<CPubKey> pub_b = m_keys.at(b).at(0)->GetPubKey(0, sign_provider, out_b);
+        return pub_a < pub_b;
     }
 
     ParseScriptContext ParseContext() const {

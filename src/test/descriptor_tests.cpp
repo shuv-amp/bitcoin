@@ -1277,6 +1277,26 @@ BOOST_AUTO_TEST_CASE(descriptor_test)
     // Fuzzer crash test cases
     CheckUnparsable("pk(musig(dd}uue/00/)k(", "pk(musig(dd}uue/00/)k(", "'pk(musig(dd}uue/00/)k(' is not a valid descriptor function");
     CheckUnparsable("tr(musig(tuus(oldepk(gg)ggggfgg)<,z(((((((((((((((((((((st)", "tr(musig(tuus(oldepk(gg)ggggfgg)<,z(((((((((((((((((((((st)","tr(): Too many ')' in musig() expression");
+
+    // Verify musig descriptors with hardened-path participants in miniscript
+    // do not falsely trigger duplicate key detection (issue #34273).
+    // Two musig() key expressions sharing the same participants but differing
+    // only in the musig-level derivation path must be treated as distinct keys.
+    {
+        FlatSigningProvider keys;
+        std::string error;
+        auto descs = Parse(
+            "tr(xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y,"
+            "and_v(v:pk(musig("
+            "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc/0h,"
+            "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y"
+            ")/0/*),pk(musig("
+            "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc/0h,"
+            "xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y"
+            ")/1/*)))",
+            keys, error, /*require_checksum=*/false);
+        BOOST_CHECK_MESSAGE(!descs.empty(), "Musig with hardened-path participants must not trigger false duplicate key detection: " + error);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(descriptor_literal_null_byte)
