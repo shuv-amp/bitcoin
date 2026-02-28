@@ -98,9 +98,10 @@ FUZZ_TARGET(mini_miner, .init = initialize_miner)
         node::MiniMiner mini_miner{pool, outpoints};
         assert(mini_miner.IsReadyToCalculate());
         const auto bump_fees = mini_miner.CalculateBumpFees(target_feerate);
+        assert(bump_fees.has_value());
         for (const auto& outpoint : outpoints) {
-            auto it = bump_fees.find(outpoint);
-            assert(it != bump_fees.end());
+            auto it = bump_fees->find(outpoint);
+            assert(it != bump_fees->end());
             assert(it->second >= 0);
             sum_fees += it->second;
         }

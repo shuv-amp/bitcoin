@@ -152,9 +152,9 @@ public:
 
     /** Construct a new block template and, for each outpoint corresponding to a transaction that
      * did not make it into the block, calculate the cost of bumping those transactions (and their
-     * ancestors) to the minimum feerate. Returns a map from outpoint to bump fee, or an empty map
+     * ancestors) to the minimum feerate. Returns a map from outpoint to bump fee, or std::nullopt
      * if they cannot be calculated. */
-    std::map<COutPoint, CAmount> CalculateBumpFees(const CFeeRate& target_feerate);
+    std::optional<std::map<COutPoint, CAmount>> CalculateBumpFees(const CFeeRate& target_feerate);
 
     /** Construct a new block template and, calculate the cost of bumping all transactions that did
      * not make it into the block to the target feerate. Returns the total bump fee, or std::nullopt

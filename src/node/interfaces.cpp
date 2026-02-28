@@ -687,7 +687,7 @@ public:
         m_node.mempool->GetTransactionAncestry(txid, ancestors, cluster_count, ancestorsize, ancestorfees);
     }
 
-    std::map<COutPoint, CAmount> calculateIndividualBumpFees(const std::vector<COutPoint>& outpoints, const CFeeRate& target_feerate) override
+    std::optional<std::map<COutPoint, CAmount>> calculateIndividualBumpFees(const std::vector<COutPoint>& outpoints, const CFeeRate& target_feerate) override
     {
         if (!m_node.mempool) {
             std::map<COutPoint, CAmount> bump_fees;

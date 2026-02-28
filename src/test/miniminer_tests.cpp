@@ -195,8 +195,10 @@ BOOST_FIXTURE_TEST_CASE(miniminer_1p1c, TestChain100Setup)
     for (const auto& feerate : various_normal_feerates) {
         node::MiniMiner mini_miner(pool, nonexistent_outpoints);
         BOOST_CHECK(mini_miner.IsReadyToCalculate());
-        auto bump_fees = mini_miner.CalculateBumpFees(feerate);
+        auto bump_fees_opt = mini_miner.CalculateBumpFees(feerate);
         BOOST_CHECK(!mini_miner.IsReadyToCalculate());
+        BOOST_REQUIRE(bump_fees_opt.has_value());
+        auto& bump_fees = *bump_fees_opt;
         BOOST_CHECK(sanity_check(all_transactions, bump_fees));
         BOOST_CHECK(bump_fees.size() == nonexistent_outpoints.size());
         for (const auto& outpoint: nonexistent_outpoints) {
@@ -210,8 +212,10 @@ BOOST_FIXTURE_TEST_CASE(miniminer_1p1c, TestChain100Setup)
     for (const auto& target_feerate : various_normal_feerates) {
         node::MiniMiner mini_miner(pool, all_unspent_outpoints);
         BOOST_CHECK(mini_miner.IsReadyToCalculate());
-        auto bump_fees = mini_miner.CalculateBumpFees(target_feerate);
+        auto bump_fees_opt = mini_miner.CalculateBumpFees(target_feerate);
         BOOST_CHECK(!mini_miner.IsReadyToCalculate());
+        BOOST_REQUIRE(bump_fees_opt.has_value());
+        auto& bump_fees = *bump_fees_opt;
         BOOST_CHECK(sanity_check(all_transactions, bump_fees));
         BOOST_CHECK_EQUAL(bump_fees.size(), all_unspent_outpoints.size());
 
@@ -264,13 +268,17 @@ BOOST_FIXTURE_TEST_CASE(miniminer_1p1c, TestChain100Setup)
     for (const auto& target_feerate : various_normal_feerates) {
         node::MiniMiner mini_miner_all_spent(pool, all_spent_outpoints);
         BOOST_CHECK(mini_miner_all_spent.IsReadyToCalculate());
-        auto bump_fees_all_spent = mini_miner_all_spent.CalculateBumpFees(target_feerate);
+        auto bump_fees_all_spent_opt = mini_miner_all_spent.CalculateBumpFees(target_feerate);
         BOOST_CHECK(!mini_miner_all_spent.IsReadyToCalculate());
+        BOOST_REQUIRE(bump_fees_all_spent_opt.has_value());
+        auto& bump_fees_all_spent = *bump_fees_all_spent_opt;
         BOOST_CHECK_EQUAL(bump_fees_all_spent.size(), all_spent_outpoints.size());
         node::MiniMiner mini_miner_all_parents(pool, all_parent_outputs);
         BOOST_CHECK(mini_miner_all_parents.IsReadyToCalculate());
-        auto bump_fees_all_parents = mini_miner_all_parents.CalculateBumpFees(target_feerate);
+        auto bump_fees_all_parents_opt = mini_miner_all_parents.CalculateBumpFees(target_feerate);
         BOOST_CHECK(!mini_miner_all_parents.IsReadyToCalculate());
+        BOOST_REQUIRE(bump_fees_all_parents_opt.has_value());
+        auto& bump_fees_all_parents = *bump_fees_all_parents_opt;
         BOOST_CHECK_EQUAL(bump_fees_all_parents.size(), all_parent_outputs.size());
         for (auto& bump_fees : {bump_fees_all_parents, bump_fees_all_spent}) {
             // For all_parents case, both outputs from the parent should have the same bump fee,
@@ -473,7 +481,9 @@ BOOST_FIXTURE_TEST_CASE(miniminer_overlap, TestChain100Setup)
         const CFeeRate very_high_feerate(COIN);
         BOOST_CHECK(tx3_anc_feerate < very_high_feerate);
         BOOST_CHECK(mini_miner.IsReadyToCalculate());
-        auto bump_fees = mini_miner.CalculateBumpFees(very_high_feerate);
+        auto bump_fees_opt = mini_miner.CalculateBumpFees(very_high_feerate);
+        BOOST_REQUIRE(bump_fees_opt.has_value());
+        auto& bump_fees = *bump_fees_opt;
         BOOST_CHECK_EQUAL(bump_fees.size(), all_unspent_outpoints.size());
         BOOST_CHECK(!mini_miner.IsReadyToCalculate());
         BOOST_CHECK(sanity_check(all_transactions, bump_fees));
@@ -514,8 +524,10 @@ BOOST_FIXTURE_TEST_CASE(miniminer_overlap, TestChain100Setup)
         const auto just_below_tx4 = CFeeRate(tx4_feerate.GetFeePerK() - 5);
         node::MiniMiner mini_miner(pool, all_unspent_outpoints);
         BOOST_CHECK(mini_miner.IsReadyToCalculate());
-        auto bump_fees = mini_miner.CalculateBumpFees(just_below_tx4);
+        auto bump_fees_opt = mini_miner.CalculateBumpFees(just_below_tx4);
         BOOST_CHECK(!mini_miner.IsReadyToCalculate());
+        BOOST_REQUIRE(bump_fees_opt.has_value());
+        auto& bump_fees = *bump_fees_opt;
         BOOST_CHECK_EQUAL(bump_fees.size(), all_unspent_outpoints.size());
         BOOST_CHECK(sanity_check(all_transactions, bump_fees));
         const auto tx6_bumpfee = bump_fees.find(COutPoint{tx6->GetHash(), 0});
@@ -538,8 +550,10 @@ BOOST_FIXTURE_TEST_CASE(miniminer_overlap, TestChain100Setup)
         BOOST_CHECK(just_above_tx6 <= CFeeRate(low_fee + high_fee, tx_vsizes[5] + tx_vsizes[7]));
         node::MiniMiner mini_miner(pool, all_unspent_outpoints);
         BOOST_CHECK(mini_miner.IsReadyToCalculate());
-        auto bump_fees = mini_miner.CalculateBumpFees(just_above_tx6);
+        auto bump_fees_opt = mini_miner.CalculateBumpFees(just_above_tx6);
         BOOST_CHECK(!mini_miner.IsReadyToCalculate());
+        BOOST_REQUIRE(bump_fees_opt.has_value());
+        auto& bump_fees = *bump_fees_opt;
         BOOST_CHECK_EQUAL(bump_fees.size(), all_unspent_outpoints.size());
         BOOST_CHECK(sanity_check(all_transactions, bump_fees));
         const auto tx6_bumpfee = bump_fees.find(COutPoint{tx6->GetHash(), 0});

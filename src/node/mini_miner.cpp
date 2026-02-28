@@ -306,9 +306,9 @@ std::map<Txid, uint32_t> MiniMiner::Linearize()
     return m_inclusion_order;
 }
 
-std::map<COutPoint, CAmount> MiniMiner::CalculateBumpFees(const CFeeRate& target_feerate)
+std::optional<std::map<COutPoint, CAmount>> MiniMiner::CalculateBumpFees(const CFeeRate& target_feerate)
 {
-    if (!m_ready_to_calculate) return {};
+    if (!m_ready_to_calculate) return std::nullopt;
     // Build a block template until the target feerate is hit.
     BuildMockTemplate(target_feerate);
 
