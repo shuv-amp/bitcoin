@@ -787,6 +787,26 @@ class ImportDescriptorsTest(BitcoinTestFramework):
             assert_equal(w_multipath.getrawchangeaddress(address_type="bech32"), w_multisplit.getrawchangeaddress(address_type="bech32"))
         assert_equal(sorted(w_multipath.listdescriptors()["descriptors"], key=lambda x: x["desc"]), sorted(w_multisplit.listdescriptors()["descriptors"], key=lambda x: x["desc"]))
 
+        self.log.info("Missing timestamp in one item should not abort the whole batch")
+        self.nodes[1].createwallet(wallet_name="wbatch", disable_private_keys=True, blank=True)
+        wbatch = self.nodes[1].get_wallet_rpc("wbatch")
+
+        key1 = get_generate_key()
+        key2 = get_generate_key()
+        key3 = get_generate_key()
+
+        res = wbatch.importdescriptors([
+            {"desc": descsum_create("wpkh(" + key1.pubkey + ")"), "timestamp": "now"},
+            {"desc": descsum_create("wpkh(" + key2.pubkey + ")")},  # missing timestamp
+            {"desc": descsum_create("wpkh(" + key3.pubkey + ")"), "timestamp": "now"},
+        ])
+        assert_equal(len(res), 3)
+        assert_equal(res[0]['success'], True)
+        assert_equal(res[1]['success'], False)
+        assert_equal(res[1]['error']['code'], -3)
+        assert_equal(res[1]['error']['message'], 'Missing required timestamp field for key')
+        assert_equal(res[2]['success'], True)
+
         self.log.info("Test older() safety")
 
         for flag in [0, SEQUENCE_LOCKTIME_TYPE_FLAG]:
