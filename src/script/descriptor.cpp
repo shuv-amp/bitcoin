@@ -32,7 +32,6 @@
 #include <util/vector.h>
 
 #include <algorithm>
-#include <compare>
 #include <iterator>
 #include <map>
 #include <memory>
